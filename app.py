@@ -84,7 +84,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов, механики наведения и UI...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов актуальной модели Qwen 3.8 на Groq с поддержкой стриминга
+                # Вызов модели Qwen 3.8 на Groq с исправленным синтаксисом стриминга
                 response_dev = client_groq.chat.completions.create(
                     model="qwen/qwen3.8-27b",
                     messages=[
@@ -94,18 +94,18 @@ if st.button("🔥 Запустить конвейер разработки") an
                     stream=True
                 )
                 
-                # Потоковый сбор кода разработчиков
+                # Потоковый сбор кода разработчиков (исправлено на choices[0])
                 raw_code = ""
                 for chunk in response_dev:
-                    if chunk.choices.delta.content:
-                        raw_code += chunk.choices.delta.content
+                    if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                        raw_code += chunk.choices[0].delta.content
                 
                 st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">🔍 <span class="agent-name">[DeepSeek-R1]:</span> Включение логического мышления (Reasoning). Дотошный поиск багов, опечаток и утечек памяти...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов тестировщика DeepSeek-R1 через OpenRouter со стримингом
+                # Вызов тестировщика DeepSeek-R1 через OpenRouter с исправленным стримингом
                 response_test = client_openrouter.chat.completions.create(
                     model="deepseek/deepseek-r1",
                     messages=[
@@ -115,20 +115,19 @@ if st.button("🔥 Запустить конвейер разработки") an
                     stream=True
                 )
                 
+                # Потоковый сбор кода тестировщика (исправлено на choices[0])
                 tested_code = ""
                 for chunk in response_test:
-                    if chunk.choices.delta.content:
-                        tested_code += chunk.choices.delta.content
+                    if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                        tested_code += chunk.choices[0].delta.content
                 
                 st.markdown('<div class="terminal-box">✨ <span class="agent-name">[Qwen & Kimi]:</span> Повторный внутренний тест пройден успешно. Передаем проект руководству...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # ИСПРАВЛЕНО: Прямая жесткая привязка API-ключа к модели Босса, чтобы убрать ошибку 401
-                model_boss = google_ai.GenerativeModel(
-                    model_name='gemini-2.5-pro'
-                )
+                # Вызов Босса через проверенный стабильный эндпоинт генерации
+                model_boss = google_ai.GenerativeModel(model_name='gemini-2.5-pro')
                 response_boss = model_boss.generate_content(
                     f"Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов:\n\n{tested_code}"
                 )
