@@ -84,30 +84,42 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов, механики наведения и UI...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов разработчиков через АКТУАЛЬНУЮ модель Qwen на Groq (qwen3-32b)
+                # Реальный вызов актуальной модели Qwen 3.8 на Groq с поддержкой стриминга
                 response_dev = client_groq.chat.completions.create(
-                    model="qwen/qwen3.6-27b",
+                    model="qwen/qwen3.8-27b",
                     messages=[
                         {"role": "system", "content": "Вы команда из 4-х ИИ-разработчиков (Gemini 3.5, Gemini 3.7, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле со встроенным JS-кодом и CSS. Графика процедурная (кодом). Выдайте ТОЛЬКО чистый готовый код игры без лишнего текста."},
                         {"role": "user", "content": f"Создай игру: {user_prompt}"}
-                    ]
+                    ],
+                    stream=True
                 )
-                raw_code = response_dev.choices.message.content
+                
+                # Потоковый сбор кода, чтобы сервер Render не сбрасывал соединение
+                raw_code = ""
+                code_placeholder = st.empty()
+                for chunk in response_dev:
+                    if chunk.choices[0].delta.content:
+                        raw_code += chunk.choices[0].delta.content
                 
                 st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">🔍 <span class="agent-name">[DeepSeek-R1]:</span> Включение логического мышления (Reasoning). Дотошный поиск багов, опечаток и утечек памяти...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов тестировщика DeepSeek-R1 через OpenRouter
+                # Реальный вызов тестировщика DeepSeek-R1 через OpenRouter со стримингом
                 response_test = client_openrouter.chat.completions.create(
                     model="deepseek/deepseek-r1",
                     messages=[
                         {"role": "system", "content": "Ты QA Тестировщик DeepSeek-R1. Проверь этот HTML/JS код на ошибки. Исправь синтаксические и логические баги. Выдай идеальный рабочий HTML-код."},
                         {"role": "user", "content": f"Вот код для проверки:\n\n{raw_code}"}
-                    ]
+                    ],
+                    stream=True
                 )
-                tested_code = response_test.choices.message.content
+                
+                tested_code = ""
+                for chunk in response_test:
+                    if chunk.choices[0].delta.content:
+                        tested_code += chunk.choices[0].delta.content
                 
                 st.markdown('<div class="terminal-box">✨ <span class="agent-name">[Qwen & Kimi]:</span> Повторный внутренний тест пройден успешно. Передаем проект руководству...</div>', unsafe_allow_html=True)
                 time.sleep(1)
