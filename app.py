@@ -9,9 +9,9 @@ st.title("🌪️ Vortex Code — ИИ-Конвейер разработки и�
 st.caption("Технология DMACES на базе моделей Gemini, Qwen, Kimi и DeepSeek")
 
 # 2. Безопасное считывание ключей из настроек Render (Environment Variables)
-GEMINI_KEY = os.getenv("AQ.Ab8RN6JArGPCqKD6FkNOFbFxWZNnJkZsgm2u65lI1I0qrtBuZQ", "")
-GROQ_KEY = os.getenv("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", "")
-OPENROUTER_KEY = os.getenv("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", "")
+GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
+GROQ_KEY = os.getenv("GROQ_API_KEY", "")
+OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 # Поле для ввода твоей идеи игры
 user_prompt = st.text_input("Какую браузерную игру вы хотите создать?", placeholder="Например: Арена 5х5 типа Ravenfield с ботами, стрельбой и пиксельной графикой")
