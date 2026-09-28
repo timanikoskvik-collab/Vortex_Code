@@ -50,7 +50,7 @@ user_prompt = st.text_input("📝 Какую браузерную игру вы 
 
 if st.button("🔥 Запустить конвейер разработки") and user_prompt:
     if not OPENROUTER_KEY:
-        st.error("❌ Ошибка: Проверьте настройки API-ключа OPENROUTER_API_KEY в панели Render!")
+        st.error("❌ Ошибка: Проверьте настройки API-ключa OPENROUTER_API_KEY в панели Render!")
     else:
         # Создаем две колонки: слева — терминал логов, справа — превью игры
         col_chat, col_game = st.columns(2)
@@ -59,7 +59,7 @@ if st.button("🔥 Запустить конвейер разработки") an
             st.markdown("### 🖥️ Системный терминал DMACES")
             log_container = st.container()
             
-            # Единственный надежный шлюз OpenRouter для всех вызовов
+            # Единый надежный шлюз OpenRouter для всех вызовов
             client_openrouter = OpenAI(
                 base_url="https://openrouter.ai",
                 api_key=OPENROUTER_KEY,
@@ -82,7 +82,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                 response_dev = client_openrouter.chat.completions.create(
                     model="qwen/qwen-2.5-coder-32b-instruct:free",
                     messages=[
-                        {"role": "system", "content": "Ты команда ИИ (Gemini, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле с JS и CSS. Графика процедурная кодом. Выдай ТОЛЬКО чистый рабочий код без текста."},
+                        {"role": "system", "content": "Ты команда ИИ. Напишите полную браузерную игру в одном HTML-файле с JS и CSS. Графика процедурная кодом. Выдай ТОЛЬКО чистый рабочий код без текста."},
                         {"role": "user", "content": f"Создай игру: {user_prompt}"}
                     ],
                     stream=True
@@ -118,7 +118,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Шаг 3: Приемка Босса (Gemini 2.5 Pro) через OpenRouter
+                # Шаг 3: Приемка Босса (Gemini 2.5 Pro) через OpenRouter без стриминга
                 response_boss = client_openrouter.chat.completions.create(
                     model="google/gemini-2.5-pro",
                     messages=[
@@ -127,6 +127,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                     ]
                 )
                 
+                # ЖЕСТКИЙ ИСПРАВЛЕННЫЙ ВЫЗОВ: Берем первый элемент списка choices строго по индексу [0]
                 final_code = response_boss.choices[0].message.content
                 
                 # Безопасное удаление markdown-тегов
