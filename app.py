@@ -121,7 +121,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Вызов Босса через OpenRouter без стриминга (обычный вызов)
+                # Вызов Босса через OpenRouter без стриминга
                 response_boss = client_openrouter.chat.completions.create(
                     model="google/gemini-2.5-pro",
                     messages=[
@@ -130,14 +130,17 @@ if st.button("🔥 Запустить конвейер разработки") an
                     ]
                 )
                 
-                # ИСПРАВЛЕНО НАВЕЧНО: Точное извлечение текста ответа Босса через OpenRouter
+                # ЖЕЛЕЗОБЕТОННО: Правильное извлечение текста ответа Босса по стандартам OpenAI/OpenRouter
                 final_code = response_boss.choices[0].message.content
                 
-                # Очищаем код от возможных markdown-тегов ```html
+                # Безопасная очистка от markdown-тегов ```html без багов сплита
                 if "```html" in final_code:
                     final_code = final_code.split("```html")[1].split("```")[0]
                 elif "```" in final_code:
                     final_code = final_code.split("```")[1].split("```")[0]
+                
+                # Обрезаем лишние пробелы по краям
+                final_code = final_code.strip()
                 
                 st.markdown('<div class="terminal-box" style="border-left-color: #34D399;">🟢 <span class="boss-name">[Gemini 3.8]:</span> ПРОЕКТ УТВЕРЖДЕН. ИГРА ВЫПУЩЕНА В СЕТЬ!</div>', unsafe_allow_html=True)
 
