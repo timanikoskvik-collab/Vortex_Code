@@ -50,7 +50,7 @@ user_prompt = st.text_input("📝 Какую браузерную игру вы 
 
 if st.button("🔥 Запустить конвейер разработки") and user_prompt:
     if not OPENROUTER_KEY:
-        st.error("❌ Ошибка: Проверьте настройки API-ключa OPENROUTER_API_KEY в панели Render!")
+        st.error("❌ Ошибка: Проверьте настройки API-ключа OPENROUTER_API_KEY в панели Render!")
     else:
         # Создаем две колонки: слева — терминал логов, справа — превью игры
         col_chat, col_game = st.columns(2)
@@ -127,7 +127,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                     ]
                 )
                 
-                # ЖЕСТКИЙ ИСПРАВЛЕННЫЙ ВЫЗОВ: Берем первый элемент списка choices строго по индексу [0]
+                # ПОЛНОСТЬЮ ИСПРАВЛЕННЫЙ СИНТАКСИС ДЛЯ OPENROUTER
                 final_code = response_boss.choices[0].message.content
                 
                 # Безопасное удаление markdown-тегов
