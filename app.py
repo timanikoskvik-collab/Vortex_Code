@@ -130,16 +130,15 @@ if st.button("🔥 Запустить конвейер разработки") an
                     ]
                 )
                 
-                # ЖЕЛЕЗОБЕТОННО: Правильное извлечение текста ответа Босса по стандартам OpenAI/OpenRouter
+                # ЖЕЛЕЗОБЕТОННОЕ ИЗВЛЕЧЕНИЕ: Извлекаем текст ответа Босса сразу с индексом [0]
                 final_code = response_boss.choices[0].message.content
                 
-                # Безопасная очистка от markdown-тегов ```html без багов сплита
+                # Безопасное удаление markdown-тегов ```html и ``` без использования ломающихся сплитов
                 if "```html" in final_code:
-                    final_code = final_code.split("```html")[1].split("```")[0]
-                elif "```" in final_code:
-                    final_code = final_code.split("```")[1].split("```")[0]
+                    final_code = final_code.replace("```html", "")
+                if "```" in final_code:
+                    final_code = final_code.replace("```", "")
                 
-                # Обрезаем лишние пробелы по краям
                 final_code = final_code.strip()
                 
                 st.markdown('<div class="terminal-box" style="border-left-color: #34D399;">🟢 <span class="boss-name">[Gemini 3.8]:</span> ПРОЕКТ УТВЕРЖДЕН. ИГРА ВЫПУЩЕНА В СЕТЬ!</div>', unsafe_allow_html=True)
