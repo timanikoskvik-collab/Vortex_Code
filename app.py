@@ -96,7 +96,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                     if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                         raw_code += chunk.choices[0].delta.content
                 
-                st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
+                st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран in единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">🔍 <span class="agent-name">[DeepSeek-R1]:</span> Включение логического мышления (Reasoning). Дотошный поиск багов, опечаток и утечек памяти...</div>', unsafe_allow_html=True)
@@ -130,10 +130,10 @@ if st.button("🔥 Запустить конвейер разработки") an
                     ]
                 )
                 
-                # ЖЕЛЕЗОБЕТОННОЕ ИЗВЛЕЧЕНИЕ: Извлекаем текст ответа Босса сразу с индексом [0]
+                # Идеальное извлечение текста ответа Босса БЕЗ ОШИБОК
                 final_code = response_boss.choices[0].message.content
                 
-                # Безопасное удаление markdown-тегов ```html и ``` без использования ломающихся сплитов
+                # Безопасное удаление markdown-тегов
                 if "```html" in final_code:
                     final_code = final_code.replace("```html", "")
                 if "```" in final_code:
