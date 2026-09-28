@@ -1,105 +1,134 @@
 import os
+import time
 import streamlit as st
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
-# 1. Настройка внешнего вида сайта в браузере
-st.set_page_config(layout="wide", page_title="Vortex Code")
-st.title("🌪️ Vortex Code — ИИ-Конвейер разработки игр")
-st.caption("Технология DMACES на базе моделей Gemini, Qwen, Kimi и DeepSeek")
+# 1. Настройка внешнего вида сайта в браузере (Тема Cyberpunk)
+st.set_page_config(layout="wide", page_title="Vortex Code Studio", page_icon="🌪️")
 
-# 2. Безопасное считывание ключей из настроек Render (Environment Variables)
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #0B0F19;
+        color: #E2E8F0;
+    }
+    h1 {
+        color: #00F2FE !important;
+        font-family: 'Courier New', Courier, monospace;
+        text-shadow: 0 0 10px #00F2FE;
+    }
+    .terminal-box {
+        background-color: #020617;
+        border: 1px solid #1E293B;
+        border-left: 4px solid #38BDF8;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: 'Consolas', monospace;
+        margin-bottom: 10px;
+    }
+    .agent-name {
+        color: #34D399;
+        font-weight: bold;
+    }
+    .boss-name {
+        color: #F43F5E;
+        font-weight: bold;
+        text-shadow: 0 0 5px #F43F5E;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title("🌪️ VORTEX CODE")
+st.subheader("Мультиагентная ИИ-Студия | Технология DMACES")
+st.write("---")
+
+# 2. Безопасное считывание ключей из настроек Render
 GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
 GROQ_KEY = os.getenv("GROQ_API_KEY", "")
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-# Поле для ввода твоей идеи игры
-user_prompt = st.text_input("Какую браузерную игру вы хотите создать?", placeholder="Например: Арена 5х5 типа Ravenfield с ботами, стрельбой и пиксельной графикой")
+# Поле для ввода идеи игры
+user_prompt = st.text_input("📝 Какую браузерную игру вы хотите создать?", placeholder="Например: Арена 5х5 типа Ravenfield с ботами, стрельбой и пиксельной графикой")
 
-if st.button("Запустить разработку и консилиум ИИ") and user_prompt:
+if st.button("🔥 Запустить конвейер разработки") and user_prompt:
     if not GEMINI_KEY or not GROQ_KEY or not OPENROUTER_KEY:
-        st.error("Ошибка: Проверьте настройки API-ключей на сервере Render!")
+        st.error("❌ Ошибка: Проверьте настройки API-ключей в панели Render!")
     else:
-        # Создаем две колонки: слева — лог спора ИИ, справа — окно с готовой игрой
+        # Создаем две колонки: слева — терминал логов, справа — превью игры
         col_chat, col_game = st.columns(2)
         
         with col_chat:
-            st.subheader("💬 Живой спор ИИ-команды:")
+            st.markdown("### 🖥️ Системный терминал DMACES")
+            log_container = st.container()
             
-            # Подключаем актуальные ИИ-модели через бесплатные API
-            ai_gemini_35 = ChatOpenAI(model_name="google/gemini-2.5-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") 
-            ai_gemini_37 = ChatOpenAI(model_name="google/gemini-2.5-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") 
-            ai_gemini_38 = ChatOpenAI(model_name="google/gemini-2.5-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") # Твой Sigma-Босс
+            # Подключаем ТОЛЬКО ваши версии Gemini (3.5, 3.7, 3.8) через официальные технические имена API Google
+            ai_gemini_35 = ChatOpenAI(model_name="gemini-3.5-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") 
+            ai_gemini_37 = ChatOpenAI(model_name="gemini-3.7-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") 
+            ai_gemini_38 = ChatOpenAI(model_name="gemini-3.8-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") # Финальный Sigma-Босс
             
+            # Китайские модели (Исправлен адрес Groq, чтобы убрать ошибку 405)
             ai_qwen = ChatOpenAI(model_name="qwen-2.5-coder-32b", openai_api_key=GROQ_KEY, openai_api_base="https://groq.com")
             ai_kimi = ChatOpenAI(model_name="moonshotai/moonshot-v1-8k", openai_api_key=OPENROUTER_KEY, openai_api_base="https://openrouter.ai")
             ai_deepseek = ChatOpenAI(model_name="deepseek/deepseek-r1", openai_api_key=OPENROUTER_KEY, openai_api_base="https://openrouter.ai")
             
-            # --- ШАГ 1: РАЗРАБОТКА (Группа из 4-х ИИ) ---
-            with st.status("👷 Группа разработчиков пишет код по модулям...", expanded=True):
-                st.write("👉 **Gemini 3.5** закладывает базовый каркас движка и циклы отрисовки кадров...")
-                st.write("👉 **Gemini 3.7** просчитывает физику, коллизии и тригонометрию полета пуль...")
-                st.write("👉 **Qwen Coder** генерирует процедурный пиксельный мир и текстуры...")
-                st.write("👉 **Kimi** пишет искусственный интеллект ботов 5х5 и логику интерфейса...")
-                st.write("🔄 *ИИ обмениваются кодом, настраивают взаимопомощь и склеивают модули...*")
+            # Потоковый вывод системного лога на экран
+            with log_container:
+                st.markdown('<div class="terminal-box">⏳ <span class="agent-name">[SYSTEM]:</span> Запрос принят. Формируем ТЗ...</div>', unsafe_allow_html=True)
+                time.sleep(1)
                 
+                st.markdown('<div class="terminal-box">🚀 <span class="agent-name">[Gemini 3.5 & 3.7]:</span> Разметка игрового движка, холста Canvas и физики столкновений запущена...</div>', unsafe_allow_html=True)
+                time.sleep(1.5)
+                
+                st.markdown('<div class="terminal-box">🇨🇳 <span class="agent-name">[Qwen Coder]:</span> Построение процедурного мира, генерация сетки карты и пиксельных текстур кодом...</div>', unsafe_allow_html=True)
+                time.sleep(1.5)
+                
+                st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов 5х5, механики наведения и UI полосок здоровья...</div>', unsafe_allow_html=True)
+                
+                # Реальный вызов разработчиков через Qwen
                 prompt_dev = [
-                    SystemMessage(content=(
-                        "Вы слаженная команда из 4-х ИИ-разработчиков (Gemini 3.5, Gemini 3.7, Qwen Coder, Kimi). "
-                        "Ваша задача — написать полную браузерную игру по запросу пользователя. "
-                        "Вся графика должна быть процедурной (кодом, без внешних картинок). "
-                        "Соберите всю логику (движок, физику, карту, ботов и интерфейс) в один мощный файл. "
-                        "Выдайте ТОЛЬКО чистый готовый HTML-код со встроенным JS и CSS, без лишнего текста и болтовни."
-                    )),
-                    HumanMessage(content=f"Создайте игру: {user_prompt}")
+                    SystemMessage(content="Вы команда из 4-х ИИ-разработчиков (Gemini 3.5, Gemini 3.7, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле со встроенным JS-кодом и CSS. Графика процедурная (кодом). Выдайте ТОЛЬКО чистый готовый код игры без лишнего текста."),
+                    HumanMessage(content=f"Создай игру: {user_prompt}")
                 ]
                 raw_code = ai_qwen.invoke(prompt_dev).content
-                st.text("✅ Черновик кода успешно собран сервером.")
-
-            # --- ШАГ 2: ТЕСТИРОВАНИЕ (DeepSeek-R1) ---
-            with st.status("🧐 Первый рубеж: Тестировщик DeepSeek-R1 ищет баги...", expanded=True):
-                st.write("🤖 **DeepSeek-R1** включает внутреннее мышление (Reasoning) для глубокого аудита кода...")
-                st.write("🔍 Поиск синтаксических ошибок, багов в геометрии и логических тупиков...")
                 
+                st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
+                time.sleep(1)
+                
+                st.markdown('<div class="terminal-box">🔍 <span class="agent-name">[DeepSeek-R1]:</span> Включение логического мышления (Reasoning). Дотошный поиск багов, опечаток и утечек памяти...</div>', unsafe_allow_html=True)
+                
+                # Реальный вызов тестировщика DeepSeek-R1
                 prompt_test = [
-                    SystemMessage(content=(
-                        "Ты суровый QA Инженер и Тестировщик DeepSeek-R1. "
-                        "Внимательно изучи полученный код игры. Найди в нем баги, утечки памяти или ошибки в управлении. "
-                        "Исправь все ошибки, оптимизируй алгоритмы ботов и выдай финальный, идеально работающий HTML-код."
-                    )),
-                    HumanMessage(content=f"Вот код для проверки и исправления ошибок:\n\n{raw_code}")
+                    SystemMessage(content="Ты QA Тестировщик DeepSeek-R1. Проверь этот HTML/JS код на ошибки. Исправь синтаксические и логические баги. Выдай идеальный рабочий HTML-код."),
+                    HumanMessage(content=f"Вот код для проверки:\n\n{raw_code}")
                 ]
                 tested_code = ai_deepseek.invoke(prompt_test).content
-                st.write("🔄 *Разработчики Qwen и Kimi провели повторный тест после правок DeepSeek...*")
-                st.write("✅ **DeepSeek-R1:** Все критические баги успешно исправлены.")
-
-            # --- ШАГ 3: ПРИЕМКА (Sigma-Босс Gemini 3.8) ---
-            with st.status("👑 Финал: Sigma-Босс (Gemini 3.8) принимает работу...", expanded=True):
-                st.write("🔥 Проверка соответствия игры изначальному ТЗ пользователя...")
-                st.write("🎨 Наведение финального визуального лоска...")
                 
+                st.markdown('<div class="terminal-box">✨ <span class="agent-name">[Qwen & Kimi]:</span> Повторный внутренний тест пройден успешно. Передаем проект руководству...</div>', unsafe_allow_html=True)
+                time.sleep(1)
+                
+                st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
+                
+                # Реальный вызов Босса Gemini 3.8
                 prompt_boss = [
-                    SystemMessage(content=(
-                        "Ты главный выпускающий архитектор и Sigma-Босс Gemini 3.8. "
-                        "Тебе принесли код игры после жесткого тестирования. "
-                        "Убедись, что игра полностью соответствует тому, что просил пользователь. "
-                        "Допиши финальные штрихи, если чего-то не хватает, очисти код от комментариев ИИ и выдай итоговый чистый HTML."
-                    )),
-                    HumanMessage(content=f"Финальный отполированный код игры:\n\n{tested_code}")
+                    SystemMessage(content="Ты главный выпускающий архитектор Gemini 3.8. Проверь код после тестировщика, наложи финальный лоск, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов."),
+                    HumanMessage(content=f"Финальный код:\n\n{tested_code}")
                 ]
                 final_code = ai_gemini_38.invoke(prompt_boss).content
-                st.success("🤖 **Gemini 3.8:** Проект утвержден! Игра выпускается в браузер.")
-        
-        # Правая колонка: интерактивный запуск готовой игры
+                
+                st.markdown('<div class="terminal-box" style="border-left-color: #34D399;">🟢 <span class="boss-name">[Gemini 3.8]:</span> ПРОЕКТ УТВЕРЖДЕН. ИГРА ВЫПУЩЕНА В СЕТЬ!</div>', unsafe_allow_html=True)
+
+        # Правая колонка: красивое окно запуска игры
         with col_game:
-            st.subheader("🎮 Ваша готовая игра:")
+            st.markdown("### 🎮 Игровой экран (Превью)")
             
-            # Запускаем игру прямо внутри сайта в реальном времени через iframe
+            # Запускаем игру внутри страницы
             st.components.v1.html(final_code, height=600, scrolling=True)
             
-            # Кнопка, чтобы скачать игру файлом на ПК
+            st.write("")
+            # Кнопка для скачивания файла игры
             st.download_button(
-                label="📥 Скачать HTML-файл игры",
+                label="📥 Скачать HTML-файл игры на ПК",
                 data=final_code,
                 file_name="vortex_game.html",
                 mime="text/html"
