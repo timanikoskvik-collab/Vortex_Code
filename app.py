@@ -1,7 +1,6 @@
 import os
 import time
 import streamlit as st
-import google.generativeai as google_ai
 from groq import Groq
 from openai import OpenAI
 
@@ -45,7 +44,6 @@ st.subheader("Мультиагентная ИИ-Студия | Технолог�
 st.write("---")
 
 # 2. Безопасное считывание ключей из настроек Render
-GEMINI_KEY = os.getenv("GEMINI_API_KEY", "")
 GROQ_KEY = os.getenv("GROQ_API_KEY", "")
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
@@ -53,7 +51,7 @@ OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
 user_prompt = st.text_input("📝 Какую браузерную игру вы хотите создать?", placeholder="Например: Арена 5х5 типа Ravenfield с ботами, стрельбой и пиксельной графикой")
 
 if st.button("🔥 Запустить конвейер разработки") and user_prompt:
-    if not GEMINI_KEY or not GROQ_KEY or not OPENROUTER_KEY:
+    if not GROQ_KEY or not OPENROUTER_KEY:
         st.error("❌ Ошибка: Проверьте настройки API-ключей в панели Render!")
     else:
         # Создаем две колонки: слева — терминал логов, справа — превью игры
@@ -63,8 +61,7 @@ if st.button("🔥 Запустить конвейер разработки") an
             st.markdown("### 🖥️ Системный терминал DMACES")
             log_container = st.container()
             
-            # Стабильная конфигурация официальных клиентов
-            google_ai.configure(api_key=GEMINI_KEY)
+            # Инициализация надежных клиентов
             client_groq = Groq(api_key=GROQ_KEY)
             client_openrouter = OpenAI(
                 base_url="https://openrouter.ai",
@@ -84,7 +81,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов, механики наведения и UI...</div>', unsafe_allow_html=True)
                 
-                # Вызов модели Qwen 3.8 на Groq с исправленным синтаксисом стриминга
+                # Вызов модели Qwen 3.8 на Groq
                 response_dev = client_groq.chat.completions.create(
                     model="qwen/qwen3.8-27b",
                     messages=[
@@ -94,7 +91,6 @@ if st.button("🔥 Запустить конвейер разработки") an
                     stream=True
                 )
                 
-                # Потоковый сбор кода разработчиков (исправлено на choices[0])
                 raw_code = ""
                 for chunk in response_dev:
                     if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
@@ -105,7 +101,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">🔍 <span class="agent-name">[DeepSeek-R1]:</span> Включение логического мышления (Reasoning). Дотошный поиск багов, опечаток и утечек памяти...</div>', unsafe_allow_html=True)
                 
-                # Вызов тестировщика DeepSeek-R1 через OpenRouter с исправленным стримингом
+                # Вызов тестировщика DeepSeek-R1 через OpenRouter
                 response_test = client_openrouter.chat.completions.create(
                     model="deepseek/deepseek-r1",
                     messages=[
@@ -115,7 +111,6 @@ if st.button("🔥 Запустить конвейер разработки") an
                     stream=True
                 )
                 
-                # Потоковый сбор кода тестировщика (исправлено на choices[0])
                 tested_code = ""
                 for chunk in response_test:
                     if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
@@ -126,12 +121,21 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Вызов Босса через проверенный стабильный эндпоинт генерации
-                model_boss = google_ai.GenerativeModel(model_name='gemini-2.5-pro')
-                response_boss = model_boss.generate_content(
-                    f"Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов:\n\n{tested_code}"
+                # Перевод Босса на OpenRouter для 100% стабильности без ошибок 401
+                response_boss = client_openrouter.chat.completions.create(
+                    model="google/gemini-2.5-pro",
+                    messages=[
+                        {"role": "system", "content": "Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов."},
+                        {"role": "user", "content": f"Финальный код после проверки:\n\n{tested_code}"}
+                    ]
                 )
-                final_code = response_boss.text
+                final_code = response_boss.choices[0].message.content
+                
+                # Очищаем код от возможных markdown-тегов ```html, если ИИ их добавит
+                if "```html" in final_code:
+                    final_code = final_code.split("```html")[1].split("```")[0]
+                elif "```" in final_code:
+                    final_code = final_code.split("```")[1].split("```")[0]
                 
                 st.markdown('<div class="terminal-box" style="border-left-color: #34D399;">🟢 <span class="boss-name">[Gemini 3.8]:</span> ПРОЕКТ УТВЕРЖДЕН. ИГРА ВЫПУЩЕНА В СЕТЬ!</div>', unsafe_allow_html=True)
 
