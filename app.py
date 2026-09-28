@@ -1,7 +1,6 @@
 import os
 import time
 import streamlit as st
-from groq import Groq
 from openai import OpenAI
 
 # 1. Настройка внешнего вида сайта в браузере (Тема Cyberpunk)
@@ -43,16 +42,15 @@ st.title("🌪️ VORTEX CODE")
 st.subheader("Мультиагентная ИИ-Студия | Технология DMACES")
 st.write("---")
 
-# 2. Безопасное считывание ключей из настроек Render
-GROQ_KEY = os.getenv("GROQ_API_KEY", "")
+# 2. Безопасное считывание ключа OpenRouter из настроек Render
 OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
 # Поле для ввода идеи игры
 user_prompt = st.text_input("📝 Какую браузерную игру вы хотите создать?", placeholder="Например: Арена 5х5 типа Ravenfield с ботами, стрельбой и пиксельной графикой")
 
 if st.button("🔥 Запустить конвейер разработки") and user_prompt:
-    if not GROQ_KEY or not OPENROUTER_KEY:
-        st.error("❌ Ошибка: Проверьте настройки API-ключей в панели Render!")
+    if not OPENROUTER_KEY:
+        st.error("❌ Ошибка: Проверьте настройки API-ключа OPENROUTER_API_KEY в панели Render!")
     else:
         # Создаем две колонки: слева — терминал логов, справа — превью игры
         col_chat, col_game = st.columns(2)
@@ -61,8 +59,7 @@ if st.button("🔥 Запустить конвейер разработки") an
             st.markdown("### 🖥️ Системный терминал DMACES")
             log_container = st.container()
             
-            # Инициализация надежных клиентов
-            client_groq = Groq(api_key=GROQ_KEY)
+            # Единственный надежный шлюз OpenRouter для всех вызовов
             client_openrouter = OpenAI(
                 base_url="https://openrouter.ai",
                 api_key=OPENROUTER_KEY,
@@ -81,11 +78,11 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов, механики наведения и UI...</div>', unsafe_allow_html=True)
                 
-                # Вызов модели Qwen 3.8 на Groq
-                response_dev = client_groq.chat.completions.create(
-                    model="qwen/qwen3.8-27b",
+                # Шаг 1: Разработчики пишут основу через бесплатный Qwen на OpenRouter
+                response_dev = client_openrouter.chat.completions.create(
+                    model="qwen/qwen-2.5-coder-32b-instruct:free",
                     messages=[
-                        {"role": "system", "content": "Вы команда из 4-х ИИ-разработчиков (Gemini 3.5, Gemini 3.7, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле со встроенным JS-кодом и CSS. Графика процедурная (кодом). Выдайте ТОЛЬКО чистый готовый код игры без лишнего текста."},
+                        {"role": "system", "content": "Ты команда ИИ (Gemini, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле с JS и CSS. Графика процедурная кодом. Выдай ТОЛЬКО чистый рабочий код без текста."},
                         {"role": "user", "content": f"Создай игру: {user_prompt}"}
                     ],
                     stream=True
@@ -96,12 +93,12 @@ if st.button("🔥 Запустить конвейер разработки") an
                     if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                         raw_code += chunk.choices[0].delta.content
                 
-                st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран in единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
+                st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">🔍 <span class="agent-name">[DeepSeek-R1]:</span> Включение логического мышления (Reasoning). Дотошный поиск багов, опечаток и утечек памяти...</div>', unsafe_allow_html=True)
                 
-                # Вызов тестировщика DeepSeek-R1 через OpenRouter
+                # Шаг 2: Тестирование DeepSeek-R1 через OpenRouter
                 response_test = client_openrouter.chat.completions.create(
                     model="deepseek/deepseek-r1",
                     messages=[
@@ -121,7 +118,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Вызов Босса через OpenRouter без стриминга
+                # Шаг 3: Приемка Босса (Gemini 2.5 Pro) через OpenRouter
                 response_boss = client_openrouter.chat.completions.create(
                     model="google/gemini-2.5-pro",
                     messages=[
@@ -130,7 +127,6 @@ if st.button("🔥 Запустить конвейер разработки") an
                     ]
                 )
                 
-                # Идеальное извлечение текста ответа Босса БЕЗ ОШИБОК
                 final_code = response_boss.choices[0].message.content
                 
                 # Безопасное удаление markdown-тегов
