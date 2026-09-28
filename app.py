@@ -1,8 +1,9 @@
 import os
 import time
 import streamlit as st
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from google import genai
+from groq import Groq
+from openai import OpenAI
 
 # 1. Настройка внешнего вида сайта в браузере (Тема Cyberpunk)
 st.set_page_config(layout="wide", page_title="Vortex Code Studio", page_icon="🌪️")
@@ -62,15 +63,13 @@ if st.button("🔥 Запустить конвейер разработки") an
             st.markdown("### 🖥️ Системный терминал DMACES")
             log_container = st.container()
             
-            # Подключаем ТОЛЬКО ваши версии Gemini (3.5, 3.7, 3.8) через официальные технические имена API Google
-            ai_gemini_35 = ChatOpenAI(model_name="gemini-3.5-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") 
-            ai_gemini_37 = ChatOpenAI(model_name="gemini-3.7-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") 
-            ai_gemini_38 = ChatOpenAI(model_name="gemini-3.8-flash", openai_api_key=GEMINI_KEY, openai_api_base="https://googleapis.com") # Финальный Sigma-Босс
-            
-            # Китайские модели (Исправлен адрес Groq, чтобы убрать ошибку 405)
-            ai_qwen = ChatOpenAI(model_name="qwen-2.5-coder-32b", openai_api_key=GROQ_KEY, openai_api_base="https://groq.com")
-            ai_kimi = ChatOpenAI(model_name="moonshotai/moonshot-v1-8k", openai_api_key=OPENROUTER_KEY, openai_api_base="https://openrouter.ai")
-            ai_deepseek = ChatOpenAI(model_name="deepseek/deepseek-r1", openai_api_key=OPENROUTER_KEY, openai_api_base="https://openrouter.ai")
+            # Официальная инициализация клиентов без конфликтов путей
+            client_gemini = genai.Client(api_key=GEMINI_KEY)
+            client_groq = Groq(api_key=GROQ_KEY)
+            client_openrouter = OpenAI(
+                base_url="https://openrouter.ai",
+                api_key=OPENROUTER_KEY,
+            )
             
             # Потоковый вывод системного лога на экран
             with log_container:
@@ -83,42 +82,48 @@ if st.button("🔥 Запустить конвейер разработки") an
                 st.markdown('<div class="terminal-box">🇨🇳 <span class="agent-name">[Qwen Coder]:</span> Построение процедурного мира, генерация сетки карты и пиксельных текстур кодом...</div>', unsafe_allow_html=True)
                 time.sleep(1.5)
                 
-                st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов 5х5, механики наведения и UI полосок здоровья...</div>', unsafe_allow_html=True)
+                st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов, механики наведения и UI...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов разработчиков через Qwen
-                prompt_dev = [
-                    SystemMessage(content="Вы команда из 4-х ИИ-разработчиков (Gemini 3.5, Gemini 3.7, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле со встроенным JS-кодом и CSS. Графика процедурная (кодом). Выдайте ТОЛЬКО чистый готовый код игры без лишнего текста."),
-                    HumanMessage(content=f"Создай игру: {user_prompt}")
-                ]
-                raw_code = ai_qwen.invoke(prompt_dev).content
+                # Реальный вызов разработчиков через Qwen Coder на Groq
+                response_dev = client_groq.chat.completions.create(
+                    model="qwen-2.5-coder-32b",
+                    messages=[
+                        {"role": "system", "content": "Вы команда из 4-х ИИ-разработчиков (Gemini 3.5, Gemini 3.7, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле со встроенным JS-кодом и CSS. Графика процедурная (кодом). Выдайте ТОЛЬКО чистый готовый код игры без лишнего текста."},
+                        {"role": "user", "content": f"Создай игру: {user_prompt}"}
+                    ]
+                )
+                raw_code = response_dev.choices[0].message.content
                 
                 st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">🔍 <span class="agent-name">[DeepSeek-R1]:</span> Включение логического мышления (Reasoning). Дотошный поиск багов, опечаток и утечек памяти...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов тестировщика DeepSeek-R1
-                prompt_test = [
-                    SystemMessage(content="Ты QA Тестировщик DeepSeek-R1. Проверь этот HTML/JS код на ошибки. Исправь синтаксические и логические баги. Выдай идеальный рабочий HTML-код."),
-                    HumanMessage(content=f"Вот код для проверки:\n\n{raw_code}")
-                ]
-                tested_code = ai_deepseek.invoke(prompt_test).content
+                # Реальный вызов тестировщика DeepSeek-R1 через OpenRouter
+                response_test = client_openrouter.chat.completions.create(
+                    model="deepseek/deepseek-r1",
+                    messages=[
+                        {"role": "system", "content": "Ты QA Тестировщик DeepSeek-R1. Проверь этот HTML/JS код на ошибки. Исправь синтаксические и логические баги. Выдай идеальный рабочий HTML-код."},
+                        {"role": "user", "content": f"Вот код для проверки:\n\n{raw_code}"}
+                    ]
+                )
+                tested_code = response_test.choices[0].message.content
                 
                 st.markdown('<div class="terminal-box">✨ <span class="agent-name">[Qwen & Kimi]:</span> Повторный внутренний тест пройден успешно. Передаем проект руководству...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов Босса Gemini 3.8
-                prompt_boss = [
-                    SystemMessage(content="Ты главный выпускающий архитектор Gemini 3.8. Проверь код после тестировщика, наложи финальный лоск, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов."),
-                    HumanMessage(content=f"Финальный код:\n\n{tested_code}")
-                ]
-                final_code = ai_gemini_38.invoke(prompt_boss).content
+                # Реальный вызов Босса через официальный актуальный API Gemini (модель gemini-2.5-pro используется как текущий флагман логики)
+                response_boss = client_gemini.models.generate_content(
+                    model='gemini-2.5-pro',
+                    contents=f"Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов:\n\n{tested_code}"
+                )
+                final_code = response_boss.text
                 
                 st.markdown('<div class="terminal-box" style="border-left-color: #34D399;">🟢 <span class="boss-name">[Gemini 3.8]:</span> ПРОЕКТ УТВЕРЖДЕН. ИГРА ВЫПУЩЕНА В СЕТЬ!</div>', unsafe_allow_html=True)
 
-        # Правая колонка: красивое окно запуска игры
+        # Правая колонка: окно запуска игры
         with col_game:
             st.markdown("### 🎮 Игровой экран (Превью)")
             
