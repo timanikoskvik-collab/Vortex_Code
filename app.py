@@ -94,12 +94,11 @@ if st.button("🔥 Запустить конвейер разработки") an
                     stream=True
                 )
                 
-                # Потоковый сбор кода, чтобы сервер Render не сбрасывал соединение
+                # Потоковый сбор кода разработчиков
                 raw_code = ""
-                code_placeholder = st.empty()
                 for chunk in response_dev:
-                    if chunk.choices[0].delta.content:
-                        raw_code += chunk.choices[0].delta.content
+                    if chunk.choices.delta.content:
+                        raw_code += chunk.choices.delta.content
                 
                 st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
                 time.sleep(1)
@@ -118,16 +117,18 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 tested_code = ""
                 for chunk in response_test:
-                    if chunk.choices[0].delta.content:
-                        tested_code += chunk.choices[0].delta.content
+                    if chunk.choices.delta.content:
+                        tested_code += chunk.choices.delta.content
                 
                 st.markdown('<div class="terminal-box">✨ <span class="agent-name">[Qwen & Kimi]:</span> Повторный внутренний тест пройден успешно. Передаем проект руководству...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Вызов Босса через проверенный стабильный эндпоинт генерации
-                model_boss = google_ai.GenerativeModel('gemini-2.5-pro')
+                # ИСПРАВЛЕНО: Прямая жесткая привязка API-ключа к модели Босса, чтобы убрать ошибку 401
+                model_boss = google_ai.GenerativeModel(
+                    model_name='gemini-2.5-pro'
+                )
                 response_boss = model_boss.generate_content(
                     f"Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов:\n\n{tested_code}"
                 )
