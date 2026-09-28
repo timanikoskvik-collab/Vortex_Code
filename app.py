@@ -84,9 +84,9 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">🌙 <span class="agent-name">[Kimi]:</span> Программирование искусственного интеллекта ботов, механики наведения и UI...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов разработчиков через Qwen Coder на Groq
+                # Реальный вызов разработчиков через АКТУАЛЬНУЮ модель Qwen на Groq (qwen3-32b)
                 response_dev = client_groq.chat.completions.create(
-                    model="qwen-2.5-coder-32b",
+                    model="qwen/qwen3.6-27b",
                     messages=[
                         {"role": "system", "content": "Вы команда из 4-х ИИ-разработчиков (Gemini 3.5, Gemini 3.7, Qwen, Kimi). Напишите полную браузерную игру в одном HTML-файле со встроенным JS-кодом и CSS. Графика процедурная (кодом). Выдайте ТОЛЬКО чистый готовый код игры без лишнего текста."},
                         {"role": "user", "content": f"Создай игру: {user_prompt}"}
