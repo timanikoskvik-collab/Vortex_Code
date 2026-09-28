@@ -1,7 +1,7 @@
 import os
 import time
 import streamlit as st
-from google import genai
+import google.generativeai as google_ai
 from groq import Groq
 from openai import OpenAI
 
@@ -63,8 +63,8 @@ if st.button("🔥 Запустить конвейер разработки") an
             st.markdown("### 🖥️ Системный терминал DMACES")
             log_container = st.container()
             
-            # Официальная инициализация клиентов без конфликтов путей
-            client_gemini = genai.Client(api_key=GEMINI_KEY)
+            # Стабильная конфигурация официальных клиентов
+            google_ai.configure(api_key=GEMINI_KEY)
             client_groq = Groq(api_key=GROQ_KEY)
             client_openrouter = OpenAI(
                 base_url="https://openrouter.ai",
@@ -92,7 +92,7 @@ if st.button("🔥 Запустить конвейер разработки") an
                         {"role": "user", "content": f"Создай игру: {user_prompt}"}
                     ]
                 )
-                raw_code = response_dev.choices[0].message.content
+                raw_code = response_dev.choices.message.content
                 
                 st.markdown('<div class="terminal-box">🧬 <span class="agent-name">[SYSTEM]:</span> Модули склеены. Черновик кода собран в единый пул. Передача в отдел ОТК...</div>', unsafe_allow_html=True)
                 time.sleep(1)
@@ -107,17 +107,17 @@ if st.button("🔥 Запустить конвейер разработки") an
                         {"role": "user", "content": f"Вот код для проверки:\n\n{raw_code}"}
                     ]
                 )
-                tested_code = response_test.choices[0].message.content
+                tested_code = response_test.choices.message.content
                 
                 st.markdown('<div class="terminal-box">✨ <span class="agent-name">[Qwen & Kimi]:</span> Повторный внутренний тест пройден успешно. Передаем проект руководству...</div>', unsafe_allow_html=True)
                 time.sleep(1)
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Реальный вызов Босса через официальный актуальный API Gemini (модель gemini-2.5-pro используется как текущий флагман логики)
-                response_boss = client_gemini.models.generate_content(
-                    model='gemini-2.5-pro',
-                    contents=f"Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов:\n\n{tested_code}"
+                # Вызов Босса через проверенный стабильный эндпоинт генерации
+                model_boss = google_ai.GenerativeModel('gemini-2.5-pro')
+                response_boss = model_boss.generate_content(
+                    f"Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов:\n\n{tested_code}"
                 )
                 final_code = response_boss.text
                 
