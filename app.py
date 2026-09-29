@@ -59,9 +59,9 @@ if st.button("🔥 Запустить конвейер разработки") an
             st.markdown("### 🖥️ Системный терминал DMACES")
             log_container = st.container()
             
-            # Единый надежный шлюз OpenRouter для всех вызовов
+            # Единый надежный шлюз OpenRouter с правильным базовым путем /api/v1
             client_openrouter = OpenAI(
-                base_url="https://openrouter.ai",
+                base_url="https://openrouter.ai/api/v1",
                 api_key=OPENROUTER_KEY,
             )
             
@@ -118,17 +118,26 @@ if st.button("🔥 Запустить конвейер разработки") an
                 
                 st.markdown('<div class="terminal-box">👑 <span class="boss-name">[Gemini 3.8 - SIGMA BOSS]:</span> Финальное ревью. Сверка с ТЗ пользователя. Наложение финального визуального лоска...</div>', unsafe_allow_html=True)
                 
-                # Шаг 3: Приемка Босса (Gemini 2.5 Pro) через OpenRouter без стриминга
-                response_boss = client_openrouter.chat.completions.create(
-                    model="google/gemini-2.5-pro",
-                    messages=[
-                        {"role": "system", "content": "Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов."},
-                        {"role": "user", "content": f"Финальный код после проверки:\n\n{tested_code}"}
-                    ]
-                )
-                
-                # ПОЛНОСТЬЮ ИСПРАВЛЕННЫЙ СИНТАКСИС ДЛЯ OPENROUTER
-                final_code = response_boss.choices[0].message.content
+                # Шаг 3: Приемка Босса (Gemini 2.5 Pro) с защитой от ошибок
+                try:
+                    response_boss = client_openrouter.chat.completions.create(
+                        model="google/gemini-2.5-pro",
+                        messages=[
+                            {"role": "system", "content": "Ты главный выпускающий архитектор и Босс. Проведи финальный лоск кода игры после теста, убедись, что игра выглядит замечательно и выдай финальный HTML-код без лишних слов."},
+                            {"role": "user", "content": f"Финальный код после проверки:\n\n{tested_code}"}
+                        ]
+                    )
+                    
+                    # Проверка на случай, если ответ пришел в неверном формате
+                    if not hasattr(response_boss, 'choices') or not response_boss.choices:
+                        st.error(f"❌ Неверный формат ответа от OpenRouter: {response_boss}")
+                        st.stop()
+                        
+                    final_code = response_boss.choices[0].message.content
+                    
+                except Exception as e:
+                    st.error(f"❌ Ошибка при запросе к модели Босса: {e}")
+                    st.stop()
                 
                 # Безопасное удаление markdown-тегов
                 if "```html" in final_code:
@@ -155,3 +164,4 @@ if st.button("🔥 Запустить конвейер разработки") an
                 file_name="vortex_game.html",
                 mime="text/html"
             )
+            
